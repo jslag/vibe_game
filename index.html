@@ -74,15 +74,30 @@
 
         // Touch controls (simple tap zones)
         let touchStartX = null;
+        let touchStartY = null;
         window.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
         });
         window.addEventListener('touchmove', (e) => {
             const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            /*
             turnAngle = (touchStartX - touchX) * 0.001; // Adjust sensitivity
+            */
+            const deltaX = touchStartX - touchX;
+            turnAngle = THREE.MathUtils.clamp(deltaX * 0.001, -maxTurn, maxTurn);
+
+            const deltaY = touchStartY - touchY; // Positive = moving up, negative = moving down
+            if (deltaY > 10) { // Threshold to avoid jitter
+                speed = Math.min(speed + acceleration, maxSpeed); // Accelerate when moving up
+            } else if (deltaY < -10) {
+                speed = Math.max(speed - acceleration, -maxSpeed / 2); // Brake/reverse when moving down
+            }
         });
         window.addEventListener('touchend', () => {
             touchStartX = null;
+            touchStartY = null;
             turnAngle = 0;
         });
 
