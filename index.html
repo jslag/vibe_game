@@ -17,6 +17,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        // this was the original cube code
+        /*
         const geometry = new THREE.BoxGeometry();
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const cube = new THREE.Mesh(geometry, material);
@@ -31,6 +33,86 @@
             renderer.render(scene, camera);
         }
         animate();
+        */
+        // Ground (outer circle)
+        const groundGeometry = new THREE.CircleGeometry(50, 32);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2; // Lay it flat
+        scene.add(ground);
+
+        // Inner hole (to create track width)
+        const innerGeometry = new THREE.CircleGeometry(40, 32);
+        const innerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+        const inner = new THREE.Mesh(innerGeometry, innerMaterial);
+        inner.rotation.x = -Math.PI / 2;
+        inner.position.y = 0.01; // Slightly above to avoid z-fighting
+        scene.add(inner);
+
+        const carGeometry = new THREE.BoxGeometry(2, 1, 4); // Width, Height, Length
+        const carMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const car = new THREE.Mesh(carGeometry, carMaterial);
+        car.position.set(45, 0.5, 0); // Start on the track
+        scene.add(car);
+
+        // Position camera inside the car (first-person view)
+        camera.position.set(0, 1, 1); // Slightly up and back from car's center
+        car.add(camera); // Attach camera to car so it moves with it
+
+        // Car movement variables
+        let speed = 0;
+        const maxSpeed = 0.5;
+        const acceleration = 0.01;
+        const friction = 0.005;
+        let turnAngle = 0;
+        const maxTurn = 0.05;
+
+        // Keyboard controls
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+        window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+        // Touch controls (simple tap zones)
+        let touchStartX = null;
+        window.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        window.addEventListener('touchmove', (e) => {
+            const touchX = e.touches[0].clientX;
+            turnAngle = (touchStartX - touchX) * 0.001; // Adjust sensitivity
+        });
+        window.addEventListener('touchend', () => {
+            touchStartX = null;
+            turnAngle = 0;
+        });
+
+        function animate() {
+          requestAnimationFrame(animate);
+
+          // Keyboard input handling
+          if (keys.ArrowUp) speed = Math.min(speed + acceleration, maxSpeed);
+          if (keys.ArrowDown) speed = Math.max(speed - acceleration, -maxSpeed / 2);
+          if (keys.ArrowLeft) turnAngle = Math.min(turnAngle + 0.005, maxTurn);
+          if (keys.ArrowRight) turnAngle = Math.max(turnAngle - 0.005, -maxTurn);
+
+          // Apply friction
+          speed *= (1 - friction);
+          if (Math.abs(speed) < 0.01) speed = 0;
+
+          // Update car rotation and position
+          car.rotation.y += turnAngle;
+          car.position.x -= Math.sin(car.rotation.y) * speed;
+          car.position.z -= Math.cos(car.rotation.y) * speed;
+
+          // Keep car on the track (basic boundary check)
+          const distanceFromCenter = Math.sqrt(car.position.x ** 2 + car.position.z ** 2);
+          if (distanceFromCenter > 50 || distanceFromCenter < 40) {
+              speed *= -0.5; // Bounce back slightly
+          }
+
+          renderer.render(scene, camera);
+      }
+      animate();
     </script>
 </body>
 </html>
