@@ -50,7 +50,7 @@
         scene.add(inner);
 
         const carGeometry = new THREE.BoxGeometry(2, 1, 4); // Width, Height, Length
-        const carMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const carMaterial = new THREE.MeshBasicMaterial({ color: 0x000088 });
         const car = new THREE.Mesh(carGeometry, carMaterial);
         car.position.set(45, 0.5, 0); // Start on the track
         scene.add(car);
@@ -97,7 +97,7 @@
 
           // Apply friction
           speed *= (1 - friction);
-          if (Math.abs(speed) < 0.01) speed = 0;
+          if (Math.abs(speed) < 0.001) speed = 0;
 
           // Update car rotation and position
           car.rotation.y += turnAngle;
